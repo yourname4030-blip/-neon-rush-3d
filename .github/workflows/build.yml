@@ -1,37 +1,77 @@
-name: Build APK
+name: Build NeonRush Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
+    name: Build APK with LFS Assets
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
+      # 1. LFS Soho Repo Clone - Ei step miss hoilei pink dot ashe
+      - name: Checkout Repository with LFS
+        uses: actions/checkout@v4
         with:
           lfs: true
-
-      - name: Set up JDK 17
+          fetch-depth: 0
+      
+      # 2. LFS File Gula Download - Most Important Step
+      - name: Pull LFS Objects
+        run: |
+          git lfs install
+          git lfs pull
+          echo "LFS Files Downloaded:"
+          du -sh Assets/
+          ls -lh Assets/Textures/ | head -5
+      
+      # 3. Java Setup
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
-      - name: Build APK
-        run: ./gradlew assembleRelease
-
-      - name: Find APK Location
-        run: find . -name "*.apk" -type f
-
-      - name: Upload APK
+      
+      # 4. Unity Cache - Build Fast Korar Jonno
+      - name: Cache Unity Library
+        uses: actions/cache@v3
+        with:
+          path: Library
+          key: Library-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-
+      
+      # 5. Unity License Activate
+      - name: Activate Unity License
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      
+      # 6. Unity Build - Vulkan + 64bit + IL2CPP
+      - name: Build Android APK
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: Android
+          androidAppBundle: false
+          androidKeystoreName: user.keystore
+          androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          androidKeyaliasName: ${{ secrets.ANDROID_KEYALIAS_NAME }}
+          androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+          buildName: NeonRush
+          versioning: Semantic
+          allowDirtyBuild: true
+      
+      # 7. APK Upload
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NeonRush-APK
-          path: |
-            **/*.apk
+          name: NeonRush-APK-Fixed
+          path: build/Android/*.apk
+          retention-days: nam
