@@ -1,4 +1,4 @@
-name: Build AAB
+name: Build APK
 
 on:
   workflow_dispatch:
@@ -23,11 +23,11 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
         
-      - name: Build AAB
-        run: ./gradlew bundleRelease
+      - name: Build APK
+        run: ./gradlew assembleRelease
         
-      - name: Upload AAB
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: NeonRush-AAB
-          path: app/build/outputs/bundle/release/app-release.aab
+          name: NeonRush-APK
+          path: app/build/outputs/apnk/release/app-release.apk
